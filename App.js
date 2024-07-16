@@ -1,12 +1,23 @@
-import * as React from 'react';
-import { Button, View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity, TextInput } from 'react-native';
+import React, { useState } from 'react';
+import { Button, View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity, TextInput, TouchableWithoutFeedback, Keyboard, FlatList } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import Icon from 'react-native-vector-icons/FontAwesome'; 
-// import PhoneInput from './PhoneInput';
+import Icon from 'react-native-vector-icons/FontAwesome';
 
-// Create a stack navigator
 const Stack = createNativeStackNavigator();
+const flags = [
+  { id: 1, country: 'Bangladesh', code: '+880', flag: require('./bangladesh.png') },
+  { id: 2, country: 'Vietnam', code: '+84', flag: require('./vietnam.png') },
+  { id: 3, country: 'Thailand', code: '+66', flag: require('./thailand.png') },
+  { id: 4, country: 'Indonesia', code: '+62', flag: require('./indonesia.png') },
+  { id: 5, country: 'India', code: '+91', flag: require('./india.png') },
+  { id: 6, country: 'Philippines', code: '+63', flag: require('./philippines.png') },
+  { id: 7, country: 'Malaysia', code: '+60', flag: require('./malaysia.png') },
+  { id: 8, country: 'Singapore', code: '+65', flag: require('./singapore.png') },
+  { id: 9, country: 'Myanmar', code: '+95', flag: require('./myanmar.png') },
+  { id: 10, country: 'Cambodia', code: '+855', flag: require('./cambodia.png') },
+  { id: 11, country: 'Laos', code: '+856', flag: require('./laos.png') },
+];
 
 function HomeScreen({ navigation }) {
   return (
@@ -35,32 +46,88 @@ function IconButton({ name, text, backgroundColor }) {
   );
 }
 
-function SignInScreen() {
+const PhoneNumberInput = ({ phoneNumber, setPhoneNumber, error, setError, selectedCountry, setSelectedCountry }) => {
+  const handlePhoneNumberChange = (value) => {
+    const cleaned = value.replace(/[^0-9]/g, '');
+    if (cleaned.length > 10) {
+      setError(" !");
+    } else {
+      setError('');
+      setPhoneNumber(cleaned);
+    }
+  };
+
   return (
-    <View style={styles.signInContainer}>
-      <Image source={require('./TopImage.png')} style={styles.topImage} />
-      <Text style={styles.signInText}>Get your groceries</Text>
-      <Text style={{color: 'black',
-    fontSize: 25,
-    fontWeight: 'bold',
-    textAlign: 'left',
-    alignSelf: 'flex-start',
-    marginLeft: 20,}}>with nectar</Text>
-      <View style={styles.inputContainer}>
-        <Image source={require('./Icon.png')} style={styles.phoneIcon} />
-        <Text style={styles.phoneText}>+880</Text>
-        {/* <TextInput
-          style={styles.input}
-          onChangeText={setPhoneNumber}
-          value={phoneNumber}
-          placeholder="Enter phone number"
+    <View style={styles.inputContainer}>
+      <View style={styles.phoneInputContainer}>
+        <TouchableOpacity onPress={() => setSelectedCountry(selectedCountry)}>
+          <Image source={selectedCountry.flag} style={styles.flagIcon} />
+        </TouchableOpacity>
+        <Text style={styles.phoneText}>{selectedCountry.code} </Text>
+        <TextInput
+          style={[styles.phoneNumberInput, { fontSize: 20 }]}
+          placeholder="Enter your phone number"
           keyboardType="phone-pad"
-        /> */}
+          value={phoneNumber}
+          onChangeText={handlePhoneNumberChange}
+        />
       </View>
-      <Text style={styles.socialText}>Or connect with social media</Text>
-        <IconButton name="google" text="Continue with Google" backgroundColor="#4B70F5" style={{marginBottom:20}}/>
-        <IconButton name="facebook" text="Continue with Facebook" backgroundColor="#3B5998" />
+      {error ? <Text style={{ color: 'red' }}>{error}</Text> : null}
     </View>
+  );
+};
+
+function SignInScreen() {
+  const [phoneNumber, setPhoneNumber] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [showFlags, setShowFlags] = useState(false);
+  const [selectedCountry, setSelectedCountry] = useState(flags[0]);
+
+  const handleFlagPress = () => {
+    setShowFlags(!showFlags);
+  };
+
+  const handleCountrySelect = (country) => {
+    setSelectedCountry(country);
+    setShowFlags(false);
+    setPhoneNumber('');
+  };
+
+  const renderFlagItem = ({ item }) => (
+    <TouchableOpacity onPress={() => handleCountrySelect(item)}>
+      <Image source={item.flag} style={styles.flagItem} />
+    </TouchableOpacity>
+  );
+
+  return (
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.signInContainer}>
+        <Image source={require('./TopImage.png')} style={styles.topImage} />
+        <Text style={styles.signInText}>Get your groceries</Text>
+        <Text style={styles.signInText}>with nectar</Text>
+        <PhoneNumberInput
+          phoneNumber={phoneNumber}
+          setPhoneNumber={setPhoneNumber}
+          error={error}
+          setError={setError}
+          selectedCountry={selectedCountry}
+          setSelectedCountry={handleFlagPress}
+        />
+        {showFlags && (
+          <View style={styles.flagListContainer}>
+            <FlatList
+              data={flags}
+              renderItem={renderFlagItem}
+              keyExtractor={item => item.id.toString()}
+              horizontal
+            />
+          </View>
+        )}
+        <Text style={styles.socialText}>Or connect with social media</Text>
+        <IconButton name="google" text="Continue with Google" backgroundColor="#4B70F5" style={{ marginBottom: 20 }} />
+        <IconButton name="facebook" text="Continue with Facebook" backgroundColor="#3B5998" />
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 
@@ -68,15 +135,15 @@ export default function App() {
   return (
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Home">
-        <Stack.Screen 
-          name="Home" 
-          component={HomeScreen} 
-          options={{ headerShown: false }} 
+        <Stack.Screen
+          name="Home"
+          component={HomeScreen}
+          options={{ headerShown: false }}
         />
-        <Stack.Screen 
-          name="SignIn" 
-          component={SignInScreen} 
-          options={{ headerShown: false }} 
+        <Stack.Screen
+          name="SignIn"
+          component={SignInScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
     </NavigationContainer>
@@ -92,12 +159,12 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingBottom: 80, // adjust as needed to create space for the button
+    paddingBottom: 80,
   },
   content: {
-    paddingTop: 350, // adjust as needed to create space between top and content
+    paddingTop: 350,
     alignItems: 'center',
-    marginTop: 50, // adjust as needed to create space between top and content
+    marginTop: 50,
   },
   icon: {
     marginBottom: 20,
@@ -149,14 +216,12 @@ const styles = StyleSheet.create({
     marginLeft: 20,
   },
   inputContainer: {
-    width:'80%',
+    width: '80%',
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 20,
     alignSelf: 'flex-start',
     marginLeft: 20,
-    borderBottomColor: 'black',  // Set the bottom border color to black
-    borderBottomWidth: 1,        // Set the bottom border width to 1 (or as needed)
   },
   phoneIcon: {
     height: 30,
@@ -183,8 +248,8 @@ const styles = StyleSheet.create({
     width: 300,
     alignItems: 'center',
     marginBottom: 20,
-    borderRadius:10,
-    height:50,
+    borderRadius: 10,
+    height: 50,
   },
   iconLeft: {
     marginRight: 45,
@@ -193,5 +258,26 @@ const styles = StyleSheet.create({
     color: 'white',
     fontSize: 15,
     fontWeight: 'bold',
+  },
+  flagIcon: {
+    width: 30,
+    height: 20,
+    marginRight: 10,
+  },
+  flagListContainer: {
+    flexDirection: 'row',
+    marginTop: 20,
+  },
+  flagItem: {
+    width: 30,
+    height: 20,
+    marginHorizontal: 10,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderBottomWidth: 1,
+    borderBottomColor: 'black',
+    paddingBottom: 5,
   },
 });
